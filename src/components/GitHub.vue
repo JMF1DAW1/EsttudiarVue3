@@ -1,52 +1,96 @@
 <template>
     <div>
         <!-- TODO: Crear componente GitHub -->
+        <div>
+            <input type="text" placeholder="introduce usuario" v-model="user" @keydown.enter="obtenerUsuario">
+        </div>
+
+        <div v-if="userValid">
+            <button type="button" @click="mostrarTodo"> Mostrar Todo porque puedo</button>
+
+                <div v-if="mostrarALL">
+                    <div v-for="(item, id) in userData" :key="id">
+                        {{ id }} -- {{ item }}
+                    </div>
+                </div>
+
+            <div>
+                <img :src="userData.avatar_url" style="width:20%">
+                <a :href="userData.html_url"> URL del usuario {{ userData.login }} </a> 
+                <button type="button" @click="obtenerRepositorios"> Repositorios </button>
+            </div>
+
+            <div v-if="mostrarRepo">
+               <GitHubRepos :repolist="repositorios"></GitHubRepos>
+            </div>
+        </div>
+
+
     </div>
 </template>
 
 <script>
 
-// TODO: Importar componente GitHubRepos
+import GitHubRepos from "./GitHubRepos.vue"
 
 export default {
     name: 'GitHub',
     components: {
-        // TODO: Importar componente GitHubRepos
+        GitHubRepos
     },
     data: function() {
         return {
-            // TODO: crear variables de datos para el funcionamiento del componente
+            user: "",
+            userData: {},
+            userValid: false,
+            repositorios: {},
+            mostrarRepo: false,
+            mostrarALL: false,
         }
     },
     methods: {
         obtenerUsuario: function() {
-            // TODO: Función para obtener los datos de usuario de la API de GitHub
-
-            // TODO: Añadir lógica para resetear los cambios en el interfaz: desactivar campo de envío,
-            // resetear mensaje de error, mostrar lista de repositorios,...
-
-            // Obtener datos de autenticación de usuario para hacer peticiones
-            // autenticadas a la API de GitHub
             var userAuth = process.env.VUE_APP_USERNAME || "user";
             var passAuth = process.env.VUE_APP_USERTOKEN || "pass";
 
-            // TODO: realizar petición fetch par obtener los datos y mostrar la información en la página
-            // Ejemplo de paso de datos de autorización con fetch: https://stackoverflow.com/questions/43842793/basic-authentication-with-fetch
+            let headers = new Headers();
+            headers.set('Authorization', 'Basic ' + btoa(userAuth + ":" + passAuth));
 
+            var url= "https://api.github.com/users/" + this.user;
+
+            fetch(url, {method:'GET',
+                    headers: headers,
+                })
+            .then(res => res.json())
+            .then(response => {
+                console.log(response);
+                this.userData = response;
+                this.userValid = true;
+            });
+            // => console.log(json));
         },
         obtenerRepositorios: function() {
-            // TODO: Función para obtener los repositorios del usuario desde la API de GítHub
-            // La URL de los repositorios de usuario se puede obtener a través del campo 'repos_url' de los datos del usuario
-
-            // Obtener datos de autenticación de usuario para hacer peticiones
-            // autenticadas a la API de GitHub
             var userAuth = process.env.VUE_APP_USERNAME || "user";
             var passAuth = process.env.VUE_APP_USERTOKEN || "pass";
 
+            let headers = new Headers();
+            headers.set('Authorization', 'Basic ' + btoa(userAuth + ":" + passAuth));
 
-            // TODO: realizar petición fetch par obtener los datos y mostrar la información en la página
-            // Ejemplo de paso de datos de autorización con fetch: https://stackoverflow.com/questions/43842793/basic-authentication-with-fetch
+            var url= this.userData.repos_url;
 
+            fetch(url, {method:'GET',
+                    headers: headers,
+                })
+            .then(res => res.json())
+            .then(response => {
+                console.log(response);
+                this.repositorios = response;
+                this.mostrarRepo = true;
+            });
+        }, 
+
+        mostrarTodo: function() {
+            this.mostrarALL = !this.mostrarALL
         }
     }
 }
